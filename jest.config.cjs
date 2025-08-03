@@ -28,6 +28,12 @@ module.exports = {
     '**/*.(test|spec).(ts|tsx|js)',
   ],
   
+  // Ignore setup files from being treated as tests
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    'setup.ts',
+  ],
+  
   // Module name mapping for file extensions (handle .js imports in TS files)
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',

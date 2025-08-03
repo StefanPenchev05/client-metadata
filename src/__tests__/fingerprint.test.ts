@@ -198,11 +198,20 @@ describe('Browser Fingerprinting', () => {
         throw new Error('ClientJS failed');
       });
 
-      // Mock navigator to throw error
+      // Store original navigator
+      const originalNavigator = window.navigator;
+      
+      // Mock navigator properties to cause fallback fingerprint to fail
       Object.defineProperty(window, 'navigator', {
-        get: () => {
-          throw new Error('Navigator unavailable');
+        value: {
+          get userAgent() {
+            throw new Error('Navigator unavailable');
+          },
+          get language() {
+            throw new Error('Navigator unavailable');
+          },
         },
+        writable: true,
       });
 
       const result = getFingerprint();
@@ -210,6 +219,12 @@ describe('Browser Fingerprinting', () => {
       expect(typeof result).toBe('string');
       expect(result).toMatch(/^fallback_[0-9a-f]+$/);
       expect(mockConsoleWarn).toHaveBeenCalledTimes(2); // One for ClientJS, one for fallback
+      
+      // Restore original navigator
+      Object.defineProperty(window, 'navigator', {
+        value: originalNavigator,
+        writable: true,
+      });
     });
   });
 

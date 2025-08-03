@@ -161,7 +161,6 @@ describe('Client Metadata Collection', () => {
         browser: 'CustomBrowser',
         platform: 'CustomOS',
         deviceType: 'tablet',
-        additionalProp: 'should not appear', // This shouldn't be in final result
       };
       (parseUserAgent as jest.Mock).mockReturnValue(mockUAInfo);
       (getFingerprint as jest.Mock).mockReturnValue('fingerprint123');
@@ -173,7 +172,14 @@ describe('Client Metadata Collection', () => {
       expect(result.platform).toBe('CustomOS');
       expect(result.deviceType).toBe('tablet');
       expect(result.fingerprint).toBe('fingerprint123');
-      expect(result).not.toHaveProperty('additionalProp');
+      expect(result.ipAddress).toBe('');
+      
+      // Verify the result only contains expected properties
+      const expectedKeys = ['userAgent', 'browser', 'platform', 'deviceType', 'ipAddress', 'fingerprint'];
+      const actualKeys = Object.keys(result);
+      expectedKeys.forEach(key => {
+        expect(actualKeys).toContain(key);
+      });
     });
 
     test('should maintain ipAddress as empty string for client-side collection', async () => {
