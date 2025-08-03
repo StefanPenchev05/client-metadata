@@ -43,6 +43,7 @@ describe('Location Module', () => {
   describe('getLocation', () => {
     it('should return location data from the first provider when successful', async () => {
       const mockLocationData = {
+        ip: '203.0.113.1',
         country_name: 'United States',
         city: 'New York',
         latitude: 40.7128,
@@ -57,6 +58,7 @@ describe('Location Module', () => {
       const result = await getLocation();
 
       expect(result).toEqual({
+        ip: '203.0.113.1',
         country: 'United States',
         city: 'New York',
         latitude: 40.7128,
@@ -76,6 +78,7 @@ describe('Location Module', () => {
 
     it('should fallback to second provider when first provider fails', async () => {
       const mockLocationData = {
+        query: '198.51.100.1',
         country: 'Canada',
         city: 'Toronto',
         lat: 43.6532,
@@ -94,6 +97,7 @@ describe('Location Module', () => {
       const result = await getLocation();
 
       expect(result).toEqual({
+        ip: '198.51.100.1',
         country: 'Canada',
         city: 'Toronto',
         latitude: 43.6532,
@@ -154,8 +158,34 @@ describe('Location Module', () => {
 
     it('should handle responses missing required fields', async () => {
       const incompleteData = {
+        ip: '203.0.113.1',
         country_name: 'United States',
         // Missing city
+        latitude: 40.7128,
+        longitude: -74.0060,
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => incompleteData,
+      });
+      
+      // Make second provider fail too
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await getLocation();
+
+      expect(result).toBeUndefined();
+      expect(consoleSpy.warn).toHaveBeenCalledWith(
+        'Failed to fetch location from ipapi.co:', 'Missing required location fields'
+      );
+    });
+
+    it('should handle responses missing IP address', async () => {
+      const incompleteData = {
+        // Missing IP
+        country_name: 'United States',
+        city: 'New York',
         latitude: 40.7128,
         longitude: -74.0060,
       };
@@ -191,6 +221,7 @@ describe('Location Module', () => {
 
     it('should validate coordinates when provided', async () => {
       const invalidLocationData = {
+        ip: '203.0.113.1',
         country_name: 'Test Country',
         city: 'Test City',
         latitude: 200, // Invalid latitude (> 90)
@@ -209,6 +240,7 @@ describe('Location Module', () => {
 
     it('should accept location data without coordinates', async () => {
       const locationDataWithoutCoords = {
+        ip: '203.0.113.1',
         country_name: 'United Kingdom',
         city: 'London',
         // No coordinates
@@ -222,6 +254,7 @@ describe('Location Module', () => {
       const result = await getLocation();
 
       expect(result).toEqual({
+        ip: '203.0.113.1',
         country: 'United Kingdom',
         city: 'London',
         latitude: undefined,
@@ -232,6 +265,7 @@ describe('Location Module', () => {
     it('should handle different provider data formats', async () => {
       // Test ip-api.com format
       const ipApiData = {
+        query: '192.0.2.1',
         country: 'France',
         city: 'Paris',
         lat: 48.8566,
@@ -250,6 +284,7 @@ describe('Location Module', () => {
       const result = await getLocation();
 
       expect(result).toEqual({
+        ip: '192.0.2.1',
         country: 'France',
         city: 'Paris',
         latitude: 48.8566,
@@ -269,6 +304,7 @@ describe('Location Module', () => {
 
     it('should return location data when resolved within timeout', async () => {
       const mockLocationData = {
+        ip: '203.0.113.1',
         country_name: 'Germany',
         city: 'Berlin',
         latitude: 52.5200,
@@ -288,6 +324,7 @@ describe('Location Module', () => {
       const result = await resultPromise;
 
       expect(result).toEqual({
+        ip: '203.0.113.1',
         country: 'Germany',
         city: 'Berlin',
         latitude: 52.5200,
@@ -369,6 +406,7 @@ describe('Location Module', () => {
 
     it('should handle coordinates at boundary values', async () => {
       const boundaryLocationData = {
+        ip: '203.0.113.1',
         country_name: 'Test Country',
         city: 'Test City',
         latitude: 90, // Maximum valid latitude
@@ -383,6 +421,7 @@ describe('Location Module', () => {
       const result = await getLocation();
 
       expect(result).toEqual({
+        ip: '203.0.113.1',
         country: 'Test Country',
         city: 'Test City',
         latitude: 90,
@@ -392,6 +431,7 @@ describe('Location Module', () => {
 
     it('should reject coordinates outside valid ranges', async () => {
       const invalidLocationData = {
+        ip: '203.0.113.1',
         country_name: 'Test Country',
         city: 'Test City',
         latitude: -95, // Invalid latitude (< -90)
@@ -410,6 +450,7 @@ describe('Location Module', () => {
 
     it('should handle NaN coordinates', async () => {
       const nanLocationData = {
+        ip: '203.0.113.1',
         country_name: 'Test Country',
         city: 'Test City',
         latitude: NaN,

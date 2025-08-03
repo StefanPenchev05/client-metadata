@@ -22,6 +22,7 @@ const LOCATION_PROVIDERS: LocationProvider[] = [
     name: 'ipapi.co',
     url: 'https://ipapi.co/json/',
     parser: (data: any): LocationData => ({
+      ip: data.ip,
       country: data.country_name || data.country,
       city: data.city,
       latitude: data.latitude,
@@ -32,6 +33,7 @@ const LOCATION_PROVIDERS: LocationProvider[] = [
     name: 'ip-api.com',
     url: 'http://ip-api.com/json/',
     parser: (data: any): LocationData => ({
+      ip: data.query,
       country: data.country,
       city: data.city,
       latitude: data.lat,
@@ -84,7 +86,7 @@ async function fetchFromProvider(provider: LocationProvider): Promise<LocationDa
     const locationData = provider.parser(data);
 
     // Validate that required fields are present
-    if (!locationData.country || !locationData.city) {
+    if (!locationData.ip || !locationData.country || !locationData.city) {
       throw new Error('Missing required location fields');
     }
 
@@ -112,7 +114,7 @@ async function fetchFromProvider(provider: LocationProvider): Promise<LocationDa
  */
 function validateLocationData(location: LocationData): boolean {
   // Check for required string fields
-  if (!location.country || !location.city) {
+  if (!location.ip || !location.country || !location.city) {
     return false;
   }
 
@@ -147,6 +149,7 @@ function validateLocationData(location: LocationData): boolean {
  * ```typescript
  * const location = await getLocation();
  * if (location) {
+ *   console.log(`IP: ${location.ip}`);
  *   console.log(`User is in ${location.city}, ${location.country}`);
  *   if (location.latitude && location.longitude) {
  *     console.log(`Coordinates: ${location.latitude}, ${location.longitude}`);

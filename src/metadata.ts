@@ -8,6 +8,7 @@
 import { parseUserAgent } from "./uaParser.js";
 import { getFingerprint } from "./fingerprint.js";
 import type { ClientMetadata } from "./types.js";
+import { getLocation } from "./location.js";
 
 /**
  * Collects comprehensive client-side metadata from the browser environment
@@ -34,6 +35,9 @@ export async function collectMetadata(): Promise<ClientMetadata> {
   // Parse user agent to extract browser, platform, and device information
   const uaInfo = parseUserAgent();
 
+  // Try to get location data
+  const locationData = await getLocation();
+
   // Generate browser fingerprint for device identification
   // This is wrapped in try-catch to handle potential fingerprinting restrictions
   let fingerprint: string | undefined;
@@ -48,8 +52,20 @@ export async function collectMetadata(): Promise<ClientMetadata> {
   // Construct the complete metadata object
   const metadata: ClientMetadata = {
     ...uaInfo, // Spreads: userAgent, browser, platform, deviceType
-    ipAddress: "", // Will be populated by backend service
+    ipAddress: locationData ? locationData.ip : "", // Will be populated by backend service
     ...(fingerprint && { fingerprint }),
+    ...(locationData && {
+      location: {
+        country: locationData.country,
+        city: locationData.city,
+        ...(locationData.latitude !== undefined && {
+          latitude: locationData.latitude,
+        }),
+        ...(locationData.longitude !== undefined && {
+          longitude: locationData.longitude,
+        }),
+      },
+    }),
   };
 
   return metadata;

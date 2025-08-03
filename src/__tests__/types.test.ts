@@ -98,6 +98,17 @@ describe('TypeScript Type Definitions', () => {
         },
       };
 
+      expect(completeMetadata.ipAddress).toBe('172.16.0.1');
+      expect(completeMetadata.userAgent).toContain('Android');
+      expect(completeMetadata.browser).toBe('Chrome');
+      expect(completeMetadata.platform).toBe('Android');
+      expect(completeMetadata.deviceType).toBe('mobile');
+      expect(completeMetadata.fingerprint).toBe('mobile123fingerprint');
+      expect(completeMetadata.location?.country).toBe('Germany');
+      expect(completeMetadata.location?.city).toBe('Berlin');
+      expect(completeMetadata.location?.latitude).toBe(52.5200);
+      expect(completeMetadata.location?.longitude).toBe(13.4050);
+
       // Verify all properties are correctly typed
       expect(typeof completeMetadata.ipAddress).toBe('string');
       expect(typeof completeMetadata.userAgent).toBe('string');
@@ -259,6 +270,39 @@ describe('TypeScript Type Definitions', () => {
       const location = metadata.location!;
       expect(location.latitude).toBe(0);
       expect(location.longitude).toBe(0);
+    });
+  });
+
+  describe('LocationData Interface', () => {
+    test('should include IP address in standalone LocationData', () => {
+      // Import LocationData type for direct testing
+      const location: import('../types.js').LocationData = {
+        ip: '203.0.113.1',
+        country: 'Japan',
+        city: 'Tokyo',
+        latitude: 35.6762,
+        longitude: 139.6503,
+      };
+
+      expect(location.ip).toBe('203.0.113.1');
+      expect(location.country).toBe('Japan');
+      expect(location.city).toBe('Tokyo');
+      expect(location.latitude).toBe(35.6762);
+      expect(location.longitude).toBe(139.6503);
+    });
+
+    test('should work without coordinates', () => {
+      const location: import('../types.js').LocationData = {
+        ip: '198.51.100.1',
+        country: 'Australia',
+        city: 'Sydney',
+      };
+
+      expect(location.ip).toBe('198.51.100.1');
+      expect(location.country).toBe('Australia');
+      expect(location.city).toBe('Sydney');
+      expect(location.latitude).toBeUndefined();
+      expect(location.longitude).toBeUndefined();
     });
   });
 });

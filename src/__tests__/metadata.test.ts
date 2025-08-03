@@ -1,5 +1,18 @@
 /**
- * Tests for Client Metadata Collection Module
+ * Tests for Clienimport { parseUserAgent } from '../uaParser.js';
+import { getFingerprint } from '../fingerprint.js';
+
+describe('Client Metadata Collection', () => {
+  let mockConsoleWarn: jest.SpyInstance;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    
+    // Mock getLocation to return undefined (no location data) - access it via jest.mocked
+    const { getLocation } = jest.requireMock('../location.js');
+    getLocation.mockResolvedValue(undefined);
+  });Collection Module
  * 
  * This file contains tests for the main metadata collection functionality
  * including integration with all sub-modules.
@@ -16,8 +29,13 @@ jest.mock('../fingerprint.js', () => ({
   getFingerprint: jest.fn(),
 }));
 
+jest.mock('../location.js', () => ({
+  getLocation: jest.fn(),
+}));
+
 import { parseUserAgent } from '../uaParser.js';
 import { getFingerprint } from '../fingerprint.js';
+import { getLocation } from '../location.js';
 
 describe('Client Metadata Collection', () => {
   let mockConsoleWarn: jest.SpyInstance;

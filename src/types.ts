@@ -1,4 +1,7 @@
 export interface LocationData {
+  /** The IP address used for geolocation */
+  ip: string;
+
   /** Country name */
   country: string;
 
@@ -35,5 +38,5 @@ export interface ClientMetadata {
   fingerprint?: string;
 
   /** Optional location information based on IP geolocation */
-  location?: LocationData;
+  location?: Omit<LocationData, "ip">;
 }
