@@ -1,0 +1,48 @@
+{
+  "name": "@stefan-tools/client-metadata",
+  "version": "1.0.0",
+  "description": "A lightweight TypeScript library for collecting client-side metadata in the browser — including browser info, device type, platform, geolocation, and more. Ideal for frontend logging, analytics, fraud detection, and user personalization.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/StefanPenchev05/client-metadata.git"
+  },
+  "keywords": [
+    "client",
+    "metadata",
+    "browser",
+    "typescript",
+    "geolocation",
+    "device",
+    "platform",
+    "sdk",
+    "analytics"
+  ],
+  "author": "Stefan Penchev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/StefanPenchev05/client-metadata/issues"
+  },
+  "homepage": "https://github.com/StefanPenchev05/client-metadata#readme",
+  "type": "module",
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}
