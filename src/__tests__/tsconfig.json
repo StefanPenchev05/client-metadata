@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "types": ["jest", "jsdom"],
+    "resolveJsonModule": true
+  },
+  "include": [
+    "../src/**/*",
+    "./**/*"
+  ]
+}

@@ -29,7 +29,7 @@ function detectPlatform(userAgent: string): string {
     { pattern: /fedora/, name: "Fedora" },
     { pattern: /centos/, name: "CentOS" },
     { pattern: /linux/, name: "Linux" },
-    { pattern: /chromeos/, name: "Chrome OS" },
+    { pattern: /cros|chromeos/, name: "Chrome OS" }, // Fixed: added 'cros' pattern
     { pattern: /freebsd/, name: "FreeBSD" },
     { pattern: /openbsd/, name: "OpenBSD" },
     { pattern: /netbsd/, name: "NetBSD" },
@@ -62,11 +62,11 @@ function detectBrowser(userAgent: string): string {
     { pattern: /opr\//i, name: "Opera" }, // Opera
     { pattern: /brave\//i, name: "Brave" }, // Brave browser
     { pattern: /vivaldi\//i, name: "Vivaldi" }, // Vivaldi
+    { pattern: /samsungbrowser/i, name: "Samsung Internet" }, // Fixed: moved before Chrome
     { pattern: /chrome\//i, name: "Chrome" }, // Chrome (must come after other Chromium browsers)
     { pattern: /firefox\//i, name: "Firefox" }, // Firefox
     { pattern: /safari\//i, name: "Safari" }, // Safari (but not Chrome/Chromium)
     { pattern: /msie|trident/i, name: "Internet Explorer" }, // IE
-    { pattern: /samsung/i, name: "Samsung Internet" }, // Samsung Internet
     { pattern: /ucbrowser/i, name: "UC Browser" }, // UC Browser
   ];
 
@@ -94,16 +94,13 @@ function detectDeviceType(userAgent: string): string {
   const ua = userAgent.toLowerCase();
 
   // Check for tablet first (more specific)
-  if (/ipad|tablet|kindle|playbook|silk/i.test(ua)) {
+  // Include Android tablet model patterns (SM-T series for Samsung tablets)
+  if (/ipad|tablet|kindle|playbook|silk|sm-t\d+/i.test(ua)) {
     return "tablet";
   }
 
   // Check for mobile devices
-  if (
-    /mobile|android|iphone|ipod|blackberry|opera mini|iemobile|wpdesktop/i.test(
-      ua
-    )
-  ) {
+  if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile|wpdesktop/i.test(ua)) {
     return "mobile";
   }
 
