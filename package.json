@@ -1,6 +1,6 @@
 {
   "name": "client-metadata",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight TypeScript library for collecting client-side metadata in the browser — including browser info, device type, platform, geolocation, and more. Ideal for frontend logging, analytics, fraud detection, and user personalization.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
