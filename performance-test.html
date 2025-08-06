@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Client Metadata Performance Test</title>
+</head>
+<body>
+    <h1>Client Metadata Performance Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        import { getClientMetadata } from './dist/index.js';
+        
+        const results = document.getElementById('results');
+        
+        async function runPerformanceTest() {
+            // Test 1: Fast collection (no location)
+            console.time('Fast Collection');
+            const startFast = performance.now();
+            const fastMetadata = await getClientMetadata();
+            const endFast = performance.now();
+            console.timeEnd('Fast Collection');
+            
+            // Test 2: With location (slower)
+            console.time('With Location');
+            const startLocation = performance.now();
+            const locationMetadata = await getClientMetadata({ 
+                includeLocation: true,
+                locationTimeout: 2000 
+            });
+            const endLocation = performance.now();
+            console.timeEnd('With Location');
+            
+            results.innerHTML = `
+                <h2>Performance Results:</h2>
+                <p><strong>Fast Collection:</strong> ${(endFast - startFast).toFixed(2)}ms</p>
+                <p><strong>With Location:</strong> ${(endLocation - startLocation).toFixed(2)}ms</p>
+                
+                <h3>Fast Metadata:</h3>
+                <pre>${JSON.stringify(fastMetadata, null, 2)}</pre>
+                
+                <h3>Location Metadata:</h3>
+                <pre>${JSON.stringify(locationMetadata, null, 2)}</pre>
+            `;
+        }
+        
+        runPerformanceTest().catch(console.error);
+    </script>
+</body>
+</html>

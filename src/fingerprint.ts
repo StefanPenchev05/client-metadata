@@ -6,106 +6,185 @@
  * on various browser and system characteristics that remain relatively stable.
  */
 
-import { ClientJS } from "clientjs";
-
 /**
  * Generates a unique browser fingerprint based on device and browser characteristics
  * 
- * The fingerprint is created by combining various browser properties including:
- * - Screen resolution and color depth
- * - Browser plugins and their versions
- * - Timezone and language settings
- * - Canvas and WebGL rendering capabilities
- * - Audio context fingerprinting
- * - System fonts available
- * - User agent and platform details
- * 
+ * @param comprehensive - If true, uses more comprehensive fingerprinting (slower)
  * @returns A unique string fingerprint for the current browser/device combination
- * 
- * @throws Will throw an error if fingerprinting fails due to browser restrictions
- * 
- * @example
- * ```typescript
- * try {
- *   const fingerprint = getFingerprint();
- *   console.log(fingerprint); // "1234567890abcdef"
- * } catch (error) {
- *   console.warn("Fingerprinting failed:", error);
- * }
- * ```
- * 
- * @remarks
- * - Fingerprints should be considered semi-permanent (may change with browser updates)
- * - Some privacy-focused browsers may block or randomize fingerprinting attempts
- * - Consider user privacy implications when using fingerprinting technology
  */
-export function getFingerprint(): string {
+export function getFingerprint(comprehensive: boolean = false): string {
   try {
-    // Initialize the ClientJS library for browser fingerprinting
-    const client = new ClientJS();
-    
-    // Generate the fingerprint using ClientJS's comprehensive algorithm
-    // This combines multiple browser characteristics into a unique hash
-    const fingerprint = client.getFingerprint();
-    
-    // Ensure we return a string representation
-    const fingerprintString = fingerprint.toString();
-    
-    // Validate that we got a meaningful fingerprint
-    if (!fingerprintString || fingerprintString.length === 0) {
-      throw new Error("Generated fingerprint is empty");
+    if (comprehensive) {
+      return getComprehensiveFingerprint();
     }
     
-    return fingerprintString;
+    return getFastFingerprint();
     
   } catch (error) {
-    // Log the error for debugging purposes
-    console.warn("Browser fingerprinting failed:", error);
-    
-    // Return a fallback fingerprint based on basic browser info
-    // This ensures the function always returns a value, even if advanced fingerprinting fails
-    return generateFallbackFingerprint();
+    if (error instanceof Error) {
+      throw new Error(`Fingerprint generation failed: ${error.message}`);
+    } else {
+      throw new Error('Fingerprint generation failed: Unknown error');
+    }
   }
 }
 
 /**
- * Generates a basic fallback fingerprint when advanced fingerprinting fails
- * 
- * This uses only basic browser properties that are always available
- * and don't require special permissions or advanced APIs.
- * 
- * @returns A basic fingerprint string
+ * Generates a fast fingerprint using basic browser characteristics
  */
-function generateFallbackFingerprint(): string {
+function getFastFingerprint(): string {
+  const characteristics = [
+    navigator.userAgent,
+    navigator.language,
+    navigator.platform,
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency || 'unknown',
+    navigator.maxTouchPoints || 0,
+  ];
+  
+  return hashCharacteristics(characteristics);
+}
+
+/**
+ * Generates a comprehensive fingerprint using advanced browser APIs
+ */
+function getComprehensiveFingerprint(): string {
+  const characteristics: (string | number)[] = [
+    // Basic characteristics
+    ...getBasicCharacteristics(),
+    
+    // Advanced characteristics
+    getCanvasFingerprint(),
+    getWebGLFingerprint(),
+    getFontFingerprint(),
+  ];
+  
+  return hashCharacteristics(characteristics);
+}
+
+/**
+ * Gets basic browser characteristics
+ */
+function getBasicCharacteristics(): (string | number)[] {
+  return [
+    navigator.userAgent,
+    navigator.language,
+    navigator.languages?.join(',') || '',
+    navigator.platform,
+    navigator.cookieEnabled ? 'true' : 'false',
+    navigator.doNotTrack || '',
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    screen.pixelDepth,
+    new Date().getTimezoneOffset(),
+    navigator.hardwareConcurrency || 0,
+    navigator.maxTouchPoints || 0,
+    navigator.vendorSub || '',
+    navigator.productSub || '',
+  ];
+}
+
+/**
+ * Generates a canvas fingerprint
+ */
+function getCanvasFingerprint(): string {
   try {
-    // Combine basic browser properties for a simple fingerprint
-    const components = [
-      navigator.userAgent || "unknown",
-      navigator.language || "unknown",
-      screen.width || 0,
-      screen.height || 0,
-      screen.colorDepth || 0,
-      new Date().getTimezoneOffset(),
-      // Use modern userAgentData if available, otherwise skip platform info
-      (navigator as any).userAgentData?.platform || "unknown-platform",
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return 'no-canvas';
+    
+    canvas.width = 200;
+    canvas.height = 50;
+    
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#f60';
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle = '#069';
+    ctx.fillText('Canvas fingerprint', 2, 15);
+    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+    ctx.fillText('Canvas fingerprint', 4, 17);
+    
+    return canvas.toDataURL();
+  } catch {
+    return 'canvas-error';
+  }
+}
+
+/**
+ * Generates a WebGL fingerprint
+ */
+function getWebGLFingerprint(): string {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') as WebGLRenderingContext | null;
+    if (!gl) return 'no-webgl';
+    
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    if (!info) return 'no-webgl-info';
+    
+    const vendor = gl.getParameter(info.UNMASKED_VENDOR_WEBGL);
+    const renderer = gl.getParameter(info.UNMASKED_RENDERER_WEBGL);
+    
+    return `${vendor}~${renderer}`;
+  } catch {
+    return 'webgl-error';
+  }
+}
+
+/**
+ * Generates a font fingerprint
+ */
+function getFontFingerprint(): string {
+  try {
+    const testString = 'mmmmmmmmmmlli';
+    const testSize = '72px';
+    const baseFonts = ['monospace', 'sans-serif', 'serif'];
+    const fontList = [
+      'Arial', 'Arial Black', 'Arial Narrow', 'Comic Sans MS', 'Courier',
+      'Courier New', 'Georgia', 'Helvetica', 'Impact', 'Lucida Console',
+      'Times', 'Times New Roman', 'Trebuchet MS', 'Verdana'
     ];
     
-    // Create a simple hash from the components
-    const combined = components.join("|");
-    let hash = 0;
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return 'no-canvas';
     
-    for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+    context.font = testSize + ' monospace';
+    const baseWidth = context.measureText(testString).width;
+    
+    const availableFonts: string[] = [];
+    
+    for (const font of fontList) {
+      context.font = testSize + ' ' + font + ', monospace';
+      const width = context.measureText(testString).width;
+      if (width !== baseWidth) {
+        availableFonts.push(font);
+      }
     }
     
-    // Return the hash as a positive hexadecimal string
-    return Math.abs(hash).toString(16);
-    
-  } catch (error) {
-    // Last resort: return a timestamp-based identifier
-    console.warn("Fallback fingerprinting also failed:", error);
-    return `fallback_${Date.now().toString(16)}`;
+    return availableFonts.join(',');
+  } catch {
+    return 'font-error';
   }
+}
+
+/**
+ * Hashes characteristics into a fingerprint string
+ */
+function hashCharacteristics(characteristics: (string | number)[]): string {
+  const fingerprintData = characteristics.join('|');
+  
+  let hash = 0;
+  for (let i = 0; i < fingerprintData.length; i++) {
+    const char = fingerprintData.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return Math.abs(hash).toString(16);
 }

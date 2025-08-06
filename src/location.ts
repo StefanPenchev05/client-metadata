@@ -45,7 +45,15 @@ const LOCATION_PROVIDERS: LocationProvider[] = [
 /**
  * Request timeout configuration (in milliseconds)
  */
-const REQUEST_TIMEOUT = 5000; // 5 seconds
+let REQUEST_TIMEOUT = 5000; // 5 seconds (default)
+
+/**
+ * Sets the global request timeout for location providers
+ * @param timeoutMs - Timeout in milliseconds
+ */
+export function setLocationTimeout(timeoutMs: number): void {
+  REQUEST_TIMEOUT = timeoutMs;
+}
 
 /**
  * Fetches location data from a specific provider with timeout
@@ -143,11 +151,17 @@ function validateLocationData(location: LocationData): boolean {
  * This function attempts to determine the user's location using multiple
  * geolocation service providers with fallback mechanisms for reliability.
  * 
+ * @param timeoutMs - Optional custom timeout in milliseconds (default: 5000)
  * @returns Promise that resolves to location data or undefined if unavailable
  * 
  * @example
  * ```typescript
+ * // Default timeout (5 seconds)
  * const location = await getLocation();
+ * 
+ * // Custom timeout (2 seconds for faster response)
+ * const location = await getLocation(2000);
+ * 
  * if (location) {
  *   console.log(`IP: ${location.ip}`);
  *   console.log(`User is in ${location.city}, ${location.country}`);
@@ -164,7 +178,27 @@ function validateLocationData(location: LocationData): boolean {
  * - May not work in environments without internet access
  * - Some corporate networks or VPNs may affect accuracy
  */
-export async function getLocation(): Promise<LocationData | undefined> {
+export async function getLocation(timeoutMs?: number): Promise<LocationData | undefined> {
+  // Set custom timeout if provided
+  if (timeoutMs !== undefined) {
+    const originalTimeout = REQUEST_TIMEOUT;
+    setLocationTimeout(timeoutMs);
+    
+    try {
+      return await getLocationInternal();
+    } finally {
+      // Restore original timeout
+      setLocationTimeout(originalTimeout);
+    }
+  }
+  
+  return getLocationInternal();
+}
+
+/**
+ * Internal function that performs the actual location lookup
+ */
+async function getLocationInternal(): Promise<LocationData | undefined> {
   // Try each provider in sequence until one succeeds
   for (const provider of LOCATION_PROVIDERS) {
     const locationData = await fetchFromProvider(provider);

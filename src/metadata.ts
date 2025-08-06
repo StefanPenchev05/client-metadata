@@ -20,49 +20,66 @@ import { getLocation } from "./location.js";
  * - Unique browser fingerprint for device identification
  * - Additional metadata that can be collected client-side
  *
+ * @param options - Configuration options for metadata collection
+ * @param options.includeLocation - Whether to fetch location data (default: false for performance)
+ * @param options.includeFingerprint - Whether to generate fingerprint (default: true)
+ * @param options.locationTimeout - Timeout for location requests in ms (default: 2000)
  * @returns Promise that resolves to a ClientMetadata object containing all collected information
  *
  * @example
  * ```typescript
+ * // Fast collection (no location)
  * const metadata = await collectMetadata();
- * console.log(metadata.browser); // "Chrome"
- * console.log(metadata.platform); // "macOS"
- * console.log(metadata.deviceType); // "desktop"
- * console.log(metadata.fingerprint); // "a1b2c3d4e5f6..."
+ * 
+ * // With location (slower)
+ * const metadata = await collectMetadata({ includeLocation: true });
  * ```
  */
-export async function collectMetadata(): Promise<ClientMetadata> {
-  // Parse user agent to extract browser, platform, and device information
+export async function collectMetadata(options: {
+  includeLocation?: boolean;
+  includeFingerprint?: boolean;
+  locationTimeout?: number;
+} = {}): Promise<ClientMetadata> {
+  const {
+    includeLocation = false, // Default to false for performance
+    includeFingerprint = true,
+    locationTimeout = 2000, // Reduced from 5000ms
+  } = options;
+
+  // Parse user agent to extract browser, platform, and device information (fast)
   const uaInfo = parseUserAgent();
 
-  // Try to get location data
-  const locationData = await getLocation();
+  // Run location and fingerprint collection in parallel if needed
+  const [locationData, fingerprint] = await Promise.allSettled([
+    includeLocation ? getLocation(locationTimeout) : Promise.resolve(null),
+    includeFingerprint ? Promise.resolve().then(() => {
+      try {
+        return getFingerprint(false); // Use fast fingerprint (false = not comprehensive)
+      } catch (error) {
+        console.warn("Failed to generate fingerprint:", error);
+        return undefined;
+      }
+    }) : Promise.resolve(undefined),
+  ]);
 
-  // Generate browser fingerprint for device identification
-  // This is wrapped in try-catch to handle potential fingerprinting restrictions
-  let fingerprint: string | undefined;
-  try {
-    fingerprint = getFingerprint();
-  } catch (error) {
-    // Log warning but don't fail the entire metadata collection
-    console.warn("Failed to generate fingerprint:", error);
-    fingerprint = undefined;
-  }
+  // Extract results from Promise.allSettled
+  const location = locationData.status === 'fulfilled' ? locationData.value : null;
+  const fp = fingerprint.status === 'fulfilled' ? fingerprint.value : undefined;
 
   // Construct the complete metadata object
   const metadata: ClientMetadata = {
     ...uaInfo, // Spreads: userAgent, browser, platform, deviceType
-    ipAddress: locationData ? locationData.ip : "", // Will be populated by backend service
-    ...(fingerprint && { fingerprint }),
-    ...(locationData && {
+    ipAddress: location ? location.ip : "", // Will be populated by backend service
+    ...(fp && { fingerprint: fp }),
+    ...(location && {
       location: {
-        country: locationData.country,
-        city: locationData.city,
-        ...(locationData.latitude !== undefined && {
-          latitude: locationData.latitude,
+        country: location.country,
+        city: location.city,
+        ...(location.latitude !== undefined && {
+          latitude: location.latitude,
         }),
-        ...(locationData.longitude !== undefined && {
-          longitude: locationData.longitude,
+        ...(location.longitude !== undefined && {
+          longitude: location.longitude,
         }),
       },
     }),
